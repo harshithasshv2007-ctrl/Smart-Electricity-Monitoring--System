@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="ta">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Pattern Smart Meter Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        .star-rating { color: #f59e0b; font-size: 1.5rem; }
+        .hidden { display: none; }
+        .overlay { background-color: rgba(0, 0, 0, 0.75); }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 font-sans min-h-screen p-6">
+
+    <header class="flex justify-between items-center border-b border-slate-700 pb-4 mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-emerald-400">⚡ AI SMART GRID ANALYTICS</h1>
+            <p class="text-sm text-slate-400">Real-Time Processing & Edge Monitoring System</p>
+        </div>
+        <div class="bg-slate-800 px-4 py-2 rounded-lg border border-slate-700 text-center">
+            <span class="text-xs text-slate-400 block uppercase tracking-wider">⏱ Running Time</span>
+            <span id="uptime" class="text-lg font-mono text-cyan-400 font-bold">00:00:00</span>
+        </div>
+    </header>
+
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+
+        <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 col-span-2">
+            <h2 class="text-slate-400 text-xs font-bold uppercase tracking-wider mb-3">🟢 System Health</h2>
+            <div class="grid grid-cols-2 gap-4">
+                <div class="p-3 bg-slate-900 rounded-lg"><span class="text-xs text-slate-400">Voltage:</span> <span id="healthVolt" class="block font-bold text-emerald-400">Loading...</span></div>
+                <div class="p-3 bg-slate-900 rounded-lg"><span class="text-xs text-slate-400">Current:</span> <span id="healthCurr" class="block font-bold text-emerald-400">Loading...</span></div>
+                <div class="p-3 bg-slate-900 rounded-lg col-span-2"><span class="text-xs text-slate-400">Power Status:</span> <span id="healthPower" class="block font-bold text-emerald-400">Loading...</span></div>
+            </div>
+        </div>
+
+        <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 text-center flex flex-col justify-between">
+            <h2 class="text-slate-400 text-xs font-bold uppercase tracking-wider">⚡ Energy Efficiency Rating</h2>
+            <div id="stars" class="star-rating my-2">★★★★★</div>
+            <div id="effScore" class="text-4xl font-extrabold text-amber-400">100%</div>
+            <div id="effText" class="text-sm font-medium text-slate-300">Excellent</div>
+        </div>
+
+        <!-- 🔌 REMOTE OVERRIDE CONTROLLER -->
+        <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 flex flex-col justify-between">
+            <h2 class="text-slate-400 text-xs font-bold uppercase tracking-wider mb-2">🔌 REMOTE OVERRIDE</h2>
+            <div class="bg-slate-900 p-3 rounded-lg text-center flex flex-col items-center justify-center gap-2">
+                <span id="switchStatusText" class="text-xs font-bold text-slate-400 uppercase">LOAD STATUS</span>
+                <button id="relayBtn" onclick="toggleRelay()" class="px-6 py-2 rounded-lg font-bold text-sm shadow-md transition-all duration-300 bg-emerald-600 hover:bg-emerald-500 text-white cursor-pointer w-full">
+                    LOADING...
+                </button>
+            </div>
+            <p class="text-[10px] text-slate-500 mt-2 text-center">வெளியூரில் இருந்து லோடை ஆன்/ஆஃப் செய்ய உதவும் மாஸ்டர் சுவிட்ச்</p>
+        </div>
+
+        <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 text-center"><p class="text-slate-400 text-xs uppercase font-bold">Voltage Monitoring</p><p id="liveVolt" class="text-3xl font-mono font-bold text-blue-400 mt-2">0.0 V</p></div>
+        <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 text-center"><p class="text-slate-400 text-xs uppercase font-bold">Current Monitoring</p><p id="liveCurr" class="text-3xl font-mono font-bold text-orange-400 mt-2">0.00 A</p></div>
+        <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 text-center"><p class="text-slate-400 text-xs uppercase font-bold">Power Calculation</p><p id="livePower" class="text-3xl font-mono font-bold text-red-400 mt-2">0.0 W</p></div>
+        <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 text-center"><p class="text-slate-400 text-xs uppercase font-bold">Energy Calculation</p><p id="liveEnergy" class="text-3xl font-mono font-bold text-purple-400 mt-2">0.0000 kWh</p></div>
+        <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 text-center md:col-span-2"><p class="text-slate-400 text-xs uppercase font-bold">Bill Calculation</p><p id="liveBill" class="text-3xl font-mono font-bold text-yellow-400 mt-2">Rs. 0.00</p></div>
+        <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 text-center md:col-span-2"><p class="text-slate-400 text-xs uppercase font-bold">Bill Prediction (Monthly)</p><p id="predBill" class="text-3xl font-mono font-bold text-fuchsia-400 mt-2">Rs. 0.00</p></div>
+
+        <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 col-span-2 flex items-center gap-4">
+            <div class="text-3xl">💡</div>
+            <div>
+                <h2 class="text-slate-400 text-xs font-bold uppercase tracking-wider">Smart Recommendation</h2>
+                <p id="recommendation" class="text-sm font-semibold text-emerald-300 mt-1">System Operating Efficiently</p>
+            </div>
+        </div>
+
+        <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 col-span-2">
+            <h2 class="text-slate-400 text-xs font-bold uppercase tracking-wider mb-2">Event History Log</h2>
+            <div id="logsContainer" class="text-xs font-mono h-20 overflow-y-auto bg-slate-900 p-2 rounded-lg text-slate-400 space-y-1">
+                <div>[System Process Diagnostics Active]</div>
+            </div>
+        </div>
+
+    </div>
+
+    <div id="popupAlert" class="fixed inset-0 overlay flex items-center justify-center z-50 hidden">
+        <div class="bg-red-950 border-2 border-red-500 rounded-2xl p-8 max-w-md w-full text-center shadow-2xl">
+            <div class="text-5xl mb-4 animate-pulse">⚠</div>
+            <h2 class="text-2xl font-black text-red-400 tracking-wide uppercase mb-4">CRITICAL ALERT</h2>
+            <div class="bg-slate-900 p-4 rounded-xl text-left space-y-2 font-mono text-sm border border-red-900/50 mb-6">
+                <div class="flex justify-between"><span>Live Voltage:</span> <span id="popVolt" class="text-blue-400 font-bold">0V</span></div>
+                <div class="flex justify-between"><span>Live Current:</span> <span id="popCurr" class="text-orange-400 font-bold">0A</span></div>
+                <div class="flex justify-between"><span>Live Power:</span> <span id="popPower" class="text-red-400 font-bold">0W</span></div>
+            </div>
+            <p class="text-red-300 font-bold text-sm uppercase tracking-widest bg-red-900/40 py-2 rounded-lg">Action Required Immediately</p>
+        </div>
+    </div>
+
+    <script>
+        const dbUrl = "https://smartelectricitymonitori-f9bc7-default-rtdb.asia-southeast1.firebasedatabase.app/Live.json?auth=LRBzhz5uLpPF7QGuCca1zVRRqDPD03Cemz5oOWL9";
+        const writeUrl = "https://smartelectricitymonitori-f9bc7-default-rtdb.asia-southeast1.firebasedatabase.app/Live/ManualSwitch.json?auth=LRBzhz5uLpPF7QGuCca1zVRRqDPD03Cemz5oOWL9";
+        
+        let lastAlertStatus = "NORMAL";
+        let currentSwitchState = 1; // 1 = ON, 0 = OFF
+
+        function triggerVoiceAlert(text) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'en-US';
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        function addLog(message) {
+            const container = document.getElementById("logsContainer");
+            const time = new Date().toLocaleTimeString();
+            const logEntry = document.createElement("div");
+            logEntry.innerHTML = `<span class="text-slate-500">[${time}]</span> <span class="text-cyan-300">${message}</span>`;
+            container.appendChild(logEntry);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // 🎨 UI மற்றும் பட்டன் நிலைகளை மாற்றும் தெளிவான லாஜிக்
+        function updateSwitchUI(state) {
+            const btn = document.getElementById("relayBtn");
+            const statusText = document.getElementById("switchStatusText");
+            
+            if(state === 1) {
+                // லோடு ஆன்-ல் இருந்தால், பட்டன் அதை ஆஃப் (OFF) செய்ய சிவப்பு நிறத்தில் மாறும்
+                btn.innerText = "TURN OFF";
+                btn.className = "px-6 py-2 rounded-lg font-bold text-sm shadow-md transition-all duration-300 bg-red-600 hover:bg-red-500 text-white cursor-pointer w-full";
+                statusText.innerText = "LOAD STATUS: RUNNING";
+                statusText.className = "text-xs font-bold text-emerald-400 uppercase";
+            } else {
+                // லோடு ஆஃப்-ல் இருந்தால், பட்டன் அதை ஆன் (ON) செய்ய பச்சை நிறத்தில் மாறும்
+                btn.innerText = "TURN ON";
+                btn.className = "px-6 py-2 rounded-lg font-bold text-sm shadow-md transition-all duration-300 bg-emerald-600 hover:bg-emerald-500 text-white cursor-pointer w-full";
+                statusText.innerText = "LOAD STATUS: DISCONNECTED";
+                statusText.className = "text-xs font-bold text-red-400 uppercase";
+            }
+        }
+
+        // 🔌 பட்டன் கிளிக் செய்யும்போது ஃபயர்பேஸ்க்கு ரைட் பண்ணும் லாஜிக்
+        async function toggleRelay() {
+            const nextState = currentSwitchState === 1 ? 0 : 1;
+            try {
+                const response = await fetch(writeUrl, {
+                    method: "PUT",
+                    body: JSON.stringify(nextState)
+                });
+                if(response.ok) {
+                    currentSwitchState = nextState;
+                    updateSwitchUI(currentSwitchState);
+                    addLog(currentSwitchState === 1 ? "🔌 User Command: Load ON" : "🔌 User Command: Load OFF");
+                }
+            } catch (error) {
+                console.error("Error writing to Firebase", error);
+            }
+        }
+
+        async function fetchFirebaseData() {
+            try {
+                const response = await fetch(dbUrl);
+                const data = await response.json();
+                
+                if (data) {
+                    document.getElementById("liveVolt").innerText = (data.Voltage || 0).toFixed(1) + " V";
+                    document.getElementById("liveCurr").innerText = (data.Current || 0).toFixed(2) + " A";
+                    document.getElementById("livePower").innerText = (data.Power || 0).toFixed(1) + " W";
+                    document.getElementById("liveEnergy").innerText = (data.Energy || 0).toFixed(4) + " kWh";
+                    document.getElementById("liveBill").innerText = "Rs. " + (data.CurrentBill || 0).toFixed(2);
+                    document.getElementById("predBill").innerText = "Rs. " + (data.PredictedBill || 0).toFixed(2);
+
+                    document.getElementById("healthVolt").innerText = data.HealthVoltage || "Healthy";
+                    document.getElementById("healthCurr").innerText = data.HealthCurrent || "Stable";
+                    
+                    const pHealth = document.getElementById("healthPower");
+                    pHealth.innerText = data.HealthPower || "Safe";
+                    document.getElementById("uptime").innerText = data.Uptime || "00:00:00";
+
+                    // 🔌 ஃபயர்பேஸில் இருக்கும் ManualSwitch மதிப்பை படித்து UI-ஐ அப்டேட் செய்கிறது
+                    if (data.ManualSwitch !== undefined) {
+                        currentSwitchState = parseInt(data.ManualSwitch);
+                        updateSwitchUI(currentSwitchState);
+                    }
+
+                    const score = data.EfficiencyScore || 100;
+                    document.getElementById("effScore").innerText = score + "%";
+                    const starsElement = document.getElementById("stars");
+                    const effText = document.getElementById("effText");
+                    if (score >= 85) {
+                        starsElement.innerText = "★★★★★"; effText.innerText = "Excellent"; effText.className = "text-emerald-400 text-sm font-bold";
+                    } else if (score >= 60) {
+                        starsElement.innerText = "★★★☆☆"; effText.innerText = "Good"; effText.className = "text-amber-400 text-sm font-bold";
+                    } else {
+                        starsElement.innerText = "★☆☆☆☆"; effText.innerText = "Poor"; effText.className = "text-red-400 text-sm font-bold";
+                    }
+
+                    document.getElementById("recommendation").innerText = data.Recommendation || "System Operating Efficiently";
+
+                    const popup = document.getElementById("popupAlert");
+                    if (data.Alert === "OVERLOAD") {
+                        pHealth.className = "block font-bold text-red-500 animate-pulse";
+                        document.getElementById("popVolt").innerText = (data.Voltage || 0).toFixed(1) + " V";
+                        document.getElementById("popCurr").innerText = (data.Current || 0).toFixed(2) + " A";
+                        document.getElementById("popPower").innerText = (data.Power || 0).toFixed(1) + " W";
+                        popup.classList.remove("hidden");
+
+                        if (lastAlertStatus !== "OVERLOAD") {
+                            triggerVoiceAlert("Warning! Overload detected. Please reduce the connected load.");
+                            addLog("⚠ Alert: Overload Detected");
+                            lastAlertStatus = "OVERLOAD";
+                        }
+                    } else {
+                        pHealth.className = "block font-bold text-emerald-400";
+                        popup.classList.add("hidden");
+                        if (lastAlertStatus === "OVERLOAD") {
+                            addLog("🟢 Event: System Normal");
+                            lastAlertStatus = "NORMAL";
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error("Firebase read error", error);
+            }
+        }
+
+        setInterval(fetchFirebaseData, 2000);
+        fetchFirebaseData();
+    </script>
+</body>
+</html>
