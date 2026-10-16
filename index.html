@@ -26,12 +26,31 @@
 
     <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
 
+        <!-- 🧠 EDGE AI / ML ENGINE INSIGHT CARD (NEW) -->
+        <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 col-span-2 md:col-span-4 flex items-center justify-between border-l-4 border-purple-500 shadow-lg">
+            <div class="flex items-center gap-4">
+                <div class="p-3 bg-purple-950 rounded-xl text-purple-400 text-2xl">🧠</div>
+                <div>
+                    <h2 class="text-slate-400 text-xs font-bold uppercase tracking-wider">Edge AI / Machine Learning Insight</h2>
+                    <p id="mlPredictionText" class="text-lg font-extrabold text-purple-300 mt-1">Connecting to AI Brain...</p>
+                </div>
+            </div>
+            <span class="bg-purple-900/50 text-purple-300 border border-purple-700/50 text-xs px-3 py-1 rounded-full uppercase font-mono font-bold">Active Model</span>
+        </div>
+
+        <!-- 🟢 SYSTEM HEALTH & ANOMALY MONITORING -->
         <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 col-span-2">
-            <h2 class="text-slate-400 text-xs font-bold uppercase tracking-wider mb-3">🟢 System Health</h2>
+            <h2 class="text-slate-400 text-xs font-bold uppercase tracking-wider mb-3">🟢 System Health & Security</h2>
             <div class="grid grid-cols-2 gap-4">
                 <div class="p-3 bg-slate-900 rounded-lg"><span class="text-xs text-slate-400">Voltage:</span> <span id="healthVolt" class="block font-bold text-emerald-400">Loading...</span></div>
                 <div class="p-3 bg-slate-900 rounded-lg"><span class="text-xs text-slate-400">Current:</span> <span id="healthCurr" class="block font-bold text-emerald-400">Loading...</span></div>
-                <div class="p-3 bg-slate-900 rounded-lg col-span-2"><span class="text-xs text-slate-400">Power Status:</span> <span id="healthPower" class="block font-bold text-emerald-400">Loading...</span></div>
+                <div class="p-3 bg-slate-900 rounded-lg"><span class="text-xs text-slate-400">Power Status:</span> <span id="healthPower" class="block font-bold text-emerald-400">Loading...</span></div>
+                
+                <!-- 🚨 அனமாலி / மின் திருட்டு ஸ்டேட்டஸ் கார்டு -->
+                <div class="p-3 bg-slate-900 rounded-lg">
+                    <span class="text-xs text-slate-400">Anomaly Detection:</span> 
+                    <span id="suspicionStatus" class="block font-bold text-emerald-400">No Theft/Leakage</span>
+                </div>
             </div>
         </div>
 
@@ -78,16 +97,17 @@
 
     </div>
 
+    <!-- ⚠ மல்டி-லெவல் எச்சரிக்கைக்கான பாப்-அப் விண்டோ -->
     <div id="popupAlert" class="fixed inset-0 overlay flex items-center justify-center z-50 hidden">
-        <div class="bg-red-950 border-2 border-red-500 rounded-2xl p-8 max-w-md w-full text-center shadow-2xl">
+        <div id="popupBox" class="bg-red-950 border-2 border-red-500 rounded-2xl p-8 max-w-md w-full text-center shadow-2xl">
             <div class="text-5xl mb-4 animate-pulse">⚠</div>
-            <h2 class="text-2xl font-black text-red-400 tracking-wide uppercase mb-4">CRITICAL ALERT</h2>
+            <h2 id="popTitle" class="text-2xl font-black text-red-400 tracking-wide uppercase mb-4">CRITICAL ALERT</h2>
             <div class="bg-slate-900 p-4 rounded-xl text-left space-y-2 font-mono text-sm border border-red-900/50 mb-6">
-                <div class="flex justify-between"><span>Live Voltage:</span> <span id="popVolt" class="text-blue-400 font-bold">0V</span></div>
-                <div class="flex justify-between"><span>Live Current:</span> <span id="popCurr" class="text-orange-400 font-bold">0A</span></div>
+                <div class="flex justify-between"><span>Alert Level:</span> <span id="popLevel" class="text-yellow-400 font-bold">NORMAL</span></div>
                 <div class="flex justify-between"><span>Live Power:</span> <span id="popPower" class="text-red-400 font-bold">0W</span></div>
+                <div class="flex justify-between"><span>Live Voltage:</span> <span id="popVolt" class="text-blue-400 font-bold">0V</span></div>
             </div>
-            <p class="text-red-300 font-bold text-sm uppercase tracking-widest bg-red-900/40 py-2 rounded-lg">Action Required Immediately</p>
+            <p id="popAction" class="text-red-300 font-bold text-sm uppercase tracking-widest bg-red-900/40 py-2 rounded-lg">Action Required Immediately</p>
         </div>
     </div>
 
@@ -96,7 +116,8 @@
         const writeUrl = "https://smartelectricitymonitori-f9bc7-default-rtdb.asia-southeast1.firebasedatabase.app/Live/ManualSwitch.json?auth=LRBzhz5uLpPF7QGuCca1zVRRqDPD03Cemz5oOWL9";
         
         let lastAlertStatus = "NORMAL";
-        let currentSwitchState = 1; // 1 = ON, 0 = OFF
+        let lastSuspicionStatus = "No Theft/Leakage";
+        let currentSwitchState = 1;
 
         function triggerVoiceAlert(text) {
             if ('speechSynthesis' in window) {
@@ -116,19 +137,16 @@
             container.scrollTop = container.scrollHeight;
         }
 
-        // 🎨 UI மற்றும் பட்டன் நிலைகளை மாற்றும் தெளிவான லாஜிக்
         function updateSwitchUI(state) {
             const btn = document.getElementById("relayBtn");
             const statusText = document.getElementById("switchStatusText");
             
             if(state === 1) {
-                // லோடு ஆன்-ல் இருந்தால், பட்டன் அதை ஆஃப் (OFF) செய்ய சிவப்பு நிறத்தில் மாறும்
                 btn.innerText = "TURN OFF";
                 btn.className = "px-6 py-2 rounded-lg font-bold text-sm shadow-md transition-all duration-300 bg-red-600 hover:bg-red-500 text-white cursor-pointer w-full";
                 statusText.innerText = "LOAD STATUS: RUNNING";
                 statusText.className = "text-xs font-bold text-emerald-400 uppercase";
             } else {
-                // லோடு ஆஃப்-ல் இருந்தால், பட்டன் அதை ஆன் (ON) செய்ய பச்சை நிறத்தில் மாறும்
                 btn.innerText = "TURN ON";
                 btn.className = "px-6 py-2 rounded-lg font-bold text-sm shadow-md transition-all duration-300 bg-emerald-600 hover:bg-emerald-500 text-white cursor-pointer w-full";
                 statusText.innerText = "LOAD STATUS: DISCONNECTED";
@@ -136,7 +154,6 @@
             }
         }
 
-        // 🔌 பட்டன் கிளிக் செய்யும்போது ஃபயர்பேஸ்க்கு ரைட் பண்ணும் லாஜிக்
         async function toggleRelay() {
             const nextState = currentSwitchState === 1 ? 0 : 1;
             try {
@@ -174,7 +191,33 @@
                     pHealth.innerText = data.HealthPower || "Safe";
                     document.getElementById("uptime").innerText = data.Uptime || "00:00:00";
 
-                    // 🔌 ஃபயர்பேஸில் இருக்கும் ManualSwitch மதிப்பை படித்து UI-ஐ அப்டேட் செய்கிறது
+                    // 🧠 Edge AI / ML Prediction Dynamic Update
+                    const mlInsight = data.ML_Prediction || "System Normal & Stable";
+                    const mlTextElem = document.getElementById("mlPredictionText");
+                    mlTextElem.innerText = mlInsight;
+                    if (mlInsight.includes("Alert") || mlInsight.includes("Leakage") || mlInsight.includes("Overload") || mlInsight.includes("Abnormal")) {
+                        mlTextElem.className = "text-lg font-extrabold text-red-400 mt-1 animate-pulse";
+                    } else {
+                        mlTextElem.className = "text-lg font-extrabold text-purple-300 mt-1";
+                    }
+
+                    // 🚨 அனமாலி டிடெக்ஷன் UI அப்டேட் 🚨
+                    const suspicionElem = document.getElementById("suspicionStatus");
+                    const currentSuspicion = data.SuspiciousStatus || "No Theft/Leakage";
+                    suspicionElem.innerText = currentSuspicion;
+
+                    if (currentSuspicion !== "No Theft/Leakage") {
+                        suspicionElem.className = "block font-bold text-red-500 animate-pulse";
+                        if (lastSuspicionStatus === "No Theft/Leakage") {
+                            triggerVoiceAlert("Warning! Suspicious load or power leakage detected!");
+                            addLog("🚨 Alert: Suspicious Load / Power Leakage Detected!");
+                            lastSuspicionStatus = currentSuspicion;
+                        }
+                    } else {
+                        suspicionElem.className = "block font-bold text-emerald-400";
+                        lastSuspicionStatus = "No Theft/Leakage";
+                    }
+
                     if (data.ManualSwitch !== undefined) {
                         currentSwitchState = parseInt(data.ManualSwitch);
                         updateSwitchUI(currentSwitchState);
@@ -194,23 +237,54 @@
 
                     document.getElementById("recommendation").innerText = data.Recommendation || "System Operating Efficiently";
 
+                    // --- நிலைகளுக்கேற்ற மல்டி-லெவல் வார்னிங் & வாய்ஸ் அலர்ட் லாஜிக் ---
                     const popup = document.getElementById("popupAlert");
-                    if (data.Alert === "OVERLOAD") {
+                    const currentAlert = data.Alert || "NORMAL";
+                    const powerVal = (data.Power || 0).toFixed(1);
+                    const voltVal = (data.Voltage || 0).toFixed(1);
+
+                    if (currentAlert === "OVERLOAD") {
                         pHealth.className = "block font-bold text-red-500 animate-pulse";
-                        document.getElementById("popVolt").innerText = (data.Voltage || 0).toFixed(1) + " V";
-                        document.getElementById("popCurr").innerText = (data.Current || 0).toFixed(2) + " A";
-                        document.getElementById("popPower").innerText = (data.Power || 0).toFixed(1) + " W";
+                        document.getElementById("popTitle").innerText = "CRITICAL OVERLOAD";
+                        document.getElementById("popLevel").innerText = "OVERLOAD LIMIT REACHED";
+                        document.getElementById("popPower").innerText = powerVal + " W";
+                        document.getElementById("popVolt").innerText = voltVal + " V";
+                        document.getElementById("popAction").innerText = "Relay Cut-off Activated!";
                         popup.classList.remove("hidden");
 
                         if (lastAlertStatus !== "OVERLOAD") {
-                            triggerVoiceAlert("Warning! Overload detected. Please reduce the connected load.");
+                            triggerVoiceAlert("Critical Warning! Overload detected. Relay cut off.");
                             addLog("⚠ Alert: Overload Detected");
                             lastAlertStatus = "OVERLOAD";
                         }
-                    } else {
+                    } 
+                    else if (currentAlert === "HIGH WARNING") {
+                        pHealth.className = "block font-bold text-amber-500 animate-pulse";
+                        document.getElementById("popTitle").innerText = "HIGH POWER WARNING";
+                        document.getElementById("popLevel").innerText = "HIGH WARNING ZONE";
+                        document.getElementById("popPower").innerText = powerVal + " W";
+                        document.getElementById("popVolt").innerText = voltVal + " V";
+                        document.getElementById("popAction").innerText = "Reduce Load Immediately!";
+                        popup.classList.remove("hidden");
+
+                        if (lastAlertStatus !== "HIGH WARNING") {
+                            triggerVoiceAlert("Warning! High power usage near limit.");
+                            addLog("⚠ Alert: High Warning Detected");
+                            lastAlertStatus = "HIGH WARNING";
+                        }
+                    }
+                    else if (currentAlert === "WARNING") {
+                        pHealth.className = "block font-bold text-yellow-400";
+                        popup.classList.add("hidden"); 
+                        if (lastAlertStatus !== "WARNING") {
+                            addLog("⚡ Notice: Moderate Warning Zone");
+                            lastAlertStatus = "WARNING";
+                        }
+                    }
+                    else {
                         pHealth.className = "block font-bold text-emerald-400";
                         popup.classList.add("hidden");
-                        if (lastAlertStatus === "OVERLOAD") {
+                        if (lastAlertStatus !== "NORMAL") {
                             addLog("🟢 Event: System Normal");
                             lastAlertStatus = "NORMAL";
                         }
@@ -221,7 +295,7 @@
             }
         }
 
-        setInterval(fetchFirebaseData, 2000);
+        setInterval(fetchFirebaseData, 3000); 
         fetchFirebaseData();
     </script>
 </body>
